@@ -7,7 +7,7 @@
 To use spellcast_solver_cli, you need to have a C compiler (such as gcc) installed on your system. Clone this repository and compile the project:
 
 ```bash
-git clone https://github.com/yourusername/spellcast_solver_cli.git
+git clone https://github.com/ruelalarcon/spellcast_solver_cli.git
 cd spellcast_solver_cli
 make
 ```
