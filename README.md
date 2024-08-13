@@ -93,21 +93,28 @@ Here:
 When using the `--json true` option, the output will be in JSON format:
 
 ```json
-[
-  {
-    "swaps": 0,
-    "word": "EXAMPLE",
-    "score": 24,
-    "positions": [[0, 0], [1, 1], [2, 2], [3, 3], [4, 4], [3, 3], [2, 2]],
-    "swap_positions": []
-  },
-  {
-    "swaps": 1,
-    "word": "BETTER",
-    "score": 30,
-    "positions": [[0, 1], [1, 1], [2, 2], [3, 3], [4, 4], [3, 3]],
-    "swap_positions": [[0, 1]]
-  }
+[                                                                                                                                                                                        
+  {                                                                                                                                                                                      
+    "swaps": 0,                                                                                                                                                                          
+    "word": "QUASH",                                                                                                                                                                     
+    "score": 19,                                                                                                                                                                         
+    "positions": [[0, 0], [1, 1], [2, 0], [2, 1], [3, 0]],                                                                                                                               
+    "swap_positions": []                                                                                                                                                                 
+  },                                                                                                                                                                                     
+  {                                                                                                                                                                                      
+    "swaps": 1,                                                                                                                                                                          
+    "word": "QUIRK",                                                                                                                                                                     
+    "score": 21,                                                                                                                                                                         
+    "positions": [[0, 0], [1, 1], [1, 2], [0, 3], [0, 2]],                                                                                                                               
+    "swap_positions": [[0, 2]]                                                                                                                                                           
+  },                                                                                                                                                                                     
+  {                                                                                                                                                                                      
+    "swaps": 2,                                                                                                                                                                          
+    "word": "QUICK",                                                                                                                                                                     
+    "score": 24,                                                                                                                                                                         
+    "positions": [[0, 0], [1, 1], [1, 2], [0, 3], [0, 2]],                                                                                                                               
+    "swap_positions": [[0, 2], [0, 3]]                                                                                                                                                   
+  }                                                                                                                                                                                      
 ]
 ```
 
