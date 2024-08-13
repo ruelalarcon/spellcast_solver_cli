@@ -76,9 +76,7 @@ int main(int argc, char *argv[]) {
 	// Free allocated memory
 	freeDynamicWordArray(&words);
 	for (int i = 0; i <= maxSwaps; i++) {
-		free(bestResults[i].word);
-		free(bestResults[i].positions);
-		free(bestResults[i].swapPositions);
+		freeWordResult(&bestResults[i]);
 	}
 	free(bestResults);
 	freeTrie(trie);

@@ -18,14 +18,17 @@ DEPS := $(OBJS:.o=.d)
 TARGET := $(BIN_DIR)/spellcast_solver
 SYMLINK := spellcast_solver
 
+# Test executable
+TEST_TARGET := $(BIN_DIR)/run_tests
+
 # Phony targets
-.PHONY: all clean
+.PHONY: all clean test
 
 # Default target
 all: $(TARGET) $(SYMLINK)
 
 # Linking the target executable
-$(TARGET): $(OBJS) | $(BIN_DIR)
+$(TARGET): $(filter-out $(OBJ_DIR)/tests.o, $(OBJS)) | $(BIN_DIR)
 	@echo "Linking $@..."
 	@$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
@@ -45,8 +48,17 @@ $(BIN_DIR) $(OBJ_DIR):
 
 # Clean up
 clean:
-	@echo "Deleting generated files..."
+	@echo "Cleaning up..."
 	@rm -rf $(OBJ_DIR) $(BIN_DIR) $(SYMLINK)
+
+# Test target
+test: $(TEST_TARGET)
+	@echo "Running tests..."
+	@./$(TEST_TARGET)
+
+$(TEST_TARGET): $(filter-out $(OBJ_DIR)/main.o, $(OBJS)) | $(BIN_DIR)
+	@echo "Linking $@..."
+	@$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
 # Include dependency files
 -include $(DEPS)

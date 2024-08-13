@@ -33,13 +33,22 @@ static void addWordResult(DynamicWordArray *dwa, WordResult word) {
 }
 
 void freeDynamicWordArray(DynamicWordArray *dwa) {
+	for (int i = 0; i < dwa->size; i++) {
+		freeWordResult(&dwa->array[i]);
+	}
 	free(dwa->array);
 	dwa->array = NULL;
 	dwa->size = 0;
 	dwa->capacity = 0;
 }
 
-static unsigned short calculateWordScore(const char *word, const Position *positions, const Grid *grid) {
+void freeWordResult(WordResult *wr) {
+	free(wr->word);
+	free(wr->positions);
+	free(wr->swapPositions);
+}
+
+unsigned short calculateWordScore(const char *word, const Position *positions, const Grid *grid) {
 	unsigned short baseScore = 0;
 	unsigned short wordMultiplier = 1;
 
@@ -122,6 +131,7 @@ DynamicWordArray findWords(const Grid *grid, TrieNode *trie, int maxWordLength) 
 
 	return words;
 }
+
 
 static void findBestWordWithSwapsRecursive(char *word, const Position *originalPositions, TrieNode *trie,
 										   const Grid *grid, WordResult *bestResults, int currentSwaps,
