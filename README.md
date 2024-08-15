@@ -93,28 +93,28 @@ Here:
 When using the `--json true` option, the output will be in JSON format:
 
 ```json
-[                                                                                                                                                                                        
-  {                                                                                                                                                                                      
-    "swaps": 0,                                                                                                                                                                          
-    "word": "QUASH",                                                                                                                                                                     
-    "score": 19,                                                                                                                                                                         
-    "positions": [[0, 0], [1, 1], [2, 0], [2, 1], [3, 0]],                                                                                                                               
-    "swap_positions": []                                                                                                                                                                 
-  },                                                                                                                                                                                     
-  {                                                                                                                                                                                      
-    "swaps": 1,                                                                                                                                                                          
-    "word": "QUIRK",                                                                                                                                                                     
-    "score": 21,                                                                                                                                                                         
-    "positions": [[0, 0], [1, 1], [1, 2], [0, 3], [0, 2]],                                                                                                                               
-    "swap_positions": [[0, 2]]                                                                                                                                                           
-  },                                                                                                                                                                                     
-  {                                                                                                                                                                                      
-    "swaps": 2,                                                                                                                                                                          
-    "word": "QUICK",                                                                                                                                                                     
-    "score": 24,                                                                                                                                                                         
-    "positions": [[0, 0], [1, 1], [1, 2], [0, 3], [0, 2]],                                                                                                                               
-    "swap_positions": [[0, 2], [0, 3]]                                                                                                                                                   
-  }                                                                                                                                                                                      
+[
+  {
+    "swaps": 0,
+    "word": "XYST",
+    "score": 15,
+    "positions": [[4, 3], [4, 4], [3, 3], [3, 4]],
+    "swap_positions": []
+  },
+  {
+    "swaps": 1,
+    "word": "CHINTZY",
+    "score": 36,
+    "positions": [[0, 2], [1, 2], [1, 3], [2, 3], [3, 4], [3, 3], [4, 4]],
+    "swap_positions": [[3, 3]]
+  },
+  {
+    "swaps": 2,
+    "word": "TOUCHBACK",
+    "score": 42,
+    "positions": [[3, 4], [2, 4], [1, 3], [0, 2], [1, 2], [0, 1], [0, 0], [1, 0], [2, 0]],
+    "swap_positions": [[1, 3], [1, 0]]
+  }
 ]
 ```
 
@@ -122,7 +122,7 @@ When using the `--json true` option, the output will be in JSON format:
 
 For the standard output format (when `--json` is not used), the solver will print the results in a human-readable format, including a visual representation of the grid with the word highlighted in green, and letters that require swapping in blue.
 
-![output](https://github.com/user-attachments/assets/45971fde-7d4f-425c-acbb-39d2b69f988d)
+![output](https://github.com/user-attachments/assets/9b86f90e-fae5-4713-8176-ee2074c6bf34)
 
 ## Contributing
 
