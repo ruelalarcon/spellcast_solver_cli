@@ -58,17 +58,32 @@ int main(int argc, char *argv[]) {
 
 	TrieNode *trie = loadDictionary(dictFile, maxWordLength);
 
-	DynamicWordArray words = findWords(grid, trie, maxWordLength);
+	DynamicWordArray words = findWords(grid, trie, maxWordLength, maxSwaps);
 
+	// Find best words for each number of swaps
 	WordResult *bestResults = calloc(maxSwaps + 1, sizeof(WordResult));
 	for (int i = 0; i <= maxSwaps; i++) {
-		bestResults[i].word = malloc((maxWordLength + 1) * sizeof(char));
-		bestResults[i].positions = malloc(maxWordLength * sizeof(Position));
-		bestResults[i].swapPositions = malloc(maxSwaps * sizeof(Position));
+		bestResults[i].word = NULL;
+		bestResults[i].positions = NULL;
+		bestResults[i].swapPositions = NULL;
+		bestResults[i].score = 0;
 	}
 
 	for (int i = 0; i < words.size; i++) {
-		findBestWordWithSwaps(&words.array[i], trie, grid, bestResults, maxSwaps, maxWordLength);
+		int swaps = words.array[i].numSwaps;
+		if (swaps <= maxSwaps && words.array[i].score > bestResults[swaps].score) {
+			if (bestResults[swaps].word != NULL) {
+				freeWordResult(&bestResults[swaps]);
+			}
+			bestResults[swaps] = words.array[i];
+			
+			// Create deep copy of the word result
+			bestResults[swaps].word = strdup(words.array[i].word);
+			bestResults[swaps].positions = malloc(words.array[i].length * sizeof(Position));
+			memcpy(bestResults[swaps].positions, words.array[i].positions, words.array[i].length * sizeof(Position));
+			bestResults[swaps].swapPositions = malloc(words.array[i].numSwaps * sizeof(Position));
+			memcpy(bestResults[swaps].swapPositions, words.array[i].swapPositions, words.array[i].numSwaps * sizeof(Position));
+		}
 	}
 
 	outputResults(bestResults, maxSwaps, grid, useJson);
@@ -76,7 +91,9 @@ int main(int argc, char *argv[]) {
 	// Free allocated memory
 	freeDynamicWordArray(&words);
 	for (int i = 0; i <= maxSwaps; i++) {
-		freeWordResult(&bestResults[i]);
+		if (bestResults[i].word != NULL) {
+			freeWordResult(&bestResults[i]);
+		}
 	}
 	free(bestResults);
 	freeTrie(trie);

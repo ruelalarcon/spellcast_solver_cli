@@ -29,7 +29,7 @@ static void printGridWithHighlights(const Grid *grid, const Position *positions,
 			} else if (isWordPos) {
 				printf("\033[32m%c\033[0m ", word[wordIndex]);
 			} else {
-				printf("%c ", grid->letters[i][j]);
+				printf("%c ", grid->letters[i * grid->size + j]);
 			}
 		}
 		printf("\n");

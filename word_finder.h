@@ -25,22 +25,10 @@ typedef struct {
  * @param grid The game grid.
  * @param trie The Trie containing the dictionary.
  * @param maxWordLength The maximum allowed word length.
+ * @param maxSwaps The maximum amount of swaps.
  * @return A DynamicWordArray containing all found words.
  */
-DynamicWordArray findWords(const Grid *grid, TrieNode *trie, int maxWordLength);
-
-/**
- * Finds the best word with swaps for a given initial word.
- *
- * @param word The initial WordResult to start from.
- * @param trie The Trie containing the dictionary.
- * @param grid The game grid.
- * @param bestResults Array to store the best results for each number of swaps.
- * @param maxSwaps The maximum number of swaps allowed.
- * @param maxWordLength The maximum allowed word length.
- */
-void findBestWordWithSwaps(const WordResult *word, TrieNode *trie, const Grid *grid,
-						   WordResult *bestResults, int maxSwaps, int maxWordLength);
+DynamicWordArray findWords(const Grid *grid, TrieNode *trie, int maxWordLength, int maxSwaps);
 
 /**
  * Frees the memory allocated for the dynamic array of WordResults.

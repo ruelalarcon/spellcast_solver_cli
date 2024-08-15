@@ -49,12 +49,12 @@ TEST(grid_loading) {
 		char* temp_filename = create_temp_file("ABCDE\nFGHIJ\nKLM*NO\nPQR^ST\nUVWXY\n");
 
 		loadGrid(temp_filename, grid);
-		assert(grid->letters[2][2] == 'M');
-		assert(grid->letterMultiplier[2][2] == 2);
-		assert(grid->wordMultiplier[2][2] == 1);
-		assert(grid->letters[3][2] == 'R');
-		assert(grid->letterMultiplier[3][2] == 1);
-		assert(grid->wordMultiplier[3][2] == 2);
+		assert(grid->letters[2 * grid->size + 2] == 'M');
+		assert(grid->letterMultiplier[2 * grid->size + 2] == 2);
+		assert(grid->wordMultiplier[2 * grid->size + 2] == 1);
+		assert(grid->letters[3 * grid->size + 2] == 'R');
+		assert(grid->letterMultiplier[3 * grid->size + 2] == 1);
+		assert(grid->wordMultiplier[3 * grid->size + 2] == 2);
 
 		freeGrid(grid);
 		unlink(temp_filename);
@@ -67,9 +67,9 @@ TEST(grid_loading) {
 		char* temp_filename = create_temp_file("ABCDE\nFGHIJ\nKLM*^NO\nPQRST\nUVWXY\n");
 
 		loadGrid(temp_filename, grid);
-		assert(grid->letters[2][2] == 'M');
-		assert(grid->letterMultiplier[2][2] == 2);
-		assert(grid->wordMultiplier[2][2] == 2);
+		assert(grid->letters[2 * grid->size + 2] == 'M');
+		assert(grid->letterMultiplier[2 * grid->size + 2] == 2);
+		assert(grid->wordMultiplier[2 * grid->size + 2] == 2);
 
 		freeGrid(grid);
 		unlink(temp_filename);
@@ -82,15 +82,15 @@ TEST(grid_loading) {
 		char* temp_filename = create_temp_file("ABCDE\nFGH**IJ\nKL^^^MNO\nPQR**^ST\nUVWXY\n");
 
 		loadGrid(temp_filename, grid);
-		assert(grid->letters[1][2] == 'H');
-		assert(grid->letterMultiplier[1][2] == 3);
-		assert(grid->wordMultiplier[1][2] == 1);
-		assert(grid->letters[2][1] == 'L');
-		assert(grid->letterMultiplier[2][1] == 1);
-		assert(grid->wordMultiplier[2][1] == 4);
-		assert(grid->letters[3][2] == 'R');
-		assert(grid->letterMultiplier[3][2] == 3);
-		assert(grid->wordMultiplier[3][2] == 2);
+		assert(grid->letters[1 * grid->size + 2] == 'H');
+		assert(grid->letterMultiplier[1 * grid->size + 2] == 3);
+		assert(grid->wordMultiplier[1 * grid->size + 2] == 1);
+		assert(grid->letters[2 * grid->size + 1] == 'L');
+		assert(grid->letterMultiplier[2 * grid->size + 1] == 1);
+		assert(grid->wordMultiplier[2 * grid->size + 1] == 4);
+		assert(grid->letters[3 * grid->size + 2] == 'R');
+		assert(grid->letterMultiplier[3 * grid->size + 2] == 3);
+		assert(grid->wordMultiplier[3 * grid->size + 2] == 2);
 
 		freeGrid(grid);
 		unlink(temp_filename);
@@ -103,9 +103,9 @@ TEST(grid_loading) {
 		char* temp_filename = create_temp_file("ABCDE\nFGHIJ\nKLM*^*^NO\nPQRST\nUVWXY\n");
 
 		loadGrid(temp_filename, grid);
-		assert(grid->letters[2][2] == 'M');
-		assert(grid->letterMultiplier[2][2] == 3);
-		assert(grid->wordMultiplier[2][2] == 3);
+		assert(grid->letters[2 * grid->size + 2] == 'M');
+		assert(grid->letterMultiplier[2 * grid->size + 2] == 3);
+		assert(grid->wordMultiplier[2 * grid->size + 2] == 3);
 
 		freeGrid(grid);
 		unlink(temp_filename);
@@ -118,12 +118,12 @@ TEST(grid_loading) {
 		char* temp_filename = create_temp_file("ABCDE*\nFGHIJ^\nKLMNO\nPQRST\nUVWXY\n");
 
 		loadGrid(temp_filename, grid);
-		assert(grid->letters[0][4] == 'E');
-		assert(grid->letterMultiplier[0][4] == 2);
-		assert(grid->wordMultiplier[0][4] == 1);
-		assert(grid->letters[1][4] == 'J');
-		assert(grid->letterMultiplier[1][4] == 1);
-		assert(grid->wordMultiplier[1][4] == 2);
+		assert(grid->letters[0 * grid->size + 4] == 'E');
+		assert(grid->letterMultiplier[0 * grid->size + 4] == 2);
+		assert(grid->wordMultiplier[0 * grid->size + 4] == 1);
+		assert(grid->letters[1 * grid->size + 4] == 'J');
+		assert(grid->letterMultiplier[1 * grid->size + 4] == 1);
+		assert(grid->wordMultiplier[1 * grid->size + 4] == 2);
 
 		freeGrid(grid);
 		unlink(temp_filename);
@@ -136,17 +136,16 @@ TEST(trie_operations) {
 	insertWord(root, "HELLO", 5);
 	insertWord(root, "WORLD", 5);
 
-	TrieNode *node = root;
-	assert(node->children['H' - 'A'] != NULL);
-	node = node->children['H' - 'A'];
-	assert(node->children['E' - 'A'] != NULL);
-	node = node->children['E' - 'A'];
-	assert(node->children['L' - 'A'] != NULL);
-	node = node->children['L' - 'A'];
-	assert(node->children['L' - 'A'] != NULL);
-	node = node->children['L' - 'A'];
-	assert(node->children['O' - 'A'] != NULL);
-	node = node->children['O' - 'A'];
+	assert(root->children & (1U << ('H' - 'A')));
+	TrieNode *node = root->childPtrs['H' - 'A'];
+	assert(node->children & (1U << ('E' - 'A')));
+	node = node->childPtrs['E' - 'A'];
+	assert(node->children & (1U << ('L' - 'A')));
+	node = node->childPtrs['L' - 'A'];
+	assert(node->children & (1U << ('L' - 'A')));
+	node = node->childPtrs['L' - 'A'];
+	assert(node->children & (1U << ('O' - 'A')));
+	node = node->childPtrs['O' - 'A'];
 	assert(node->isWord);
 
 	freeTrie(root);
@@ -155,13 +154,11 @@ TEST(trie_operations) {
 TEST(word_finding) {
 	Grid *grid = createGrid(3);
 	// Create a simple 3x3 grid
-	char gridLetters[3][3] = {{'C', 'A', 'T'}, {'D', 'O', 'G'}, {'R', 'A', 'T'}};
-	for (int i = 0; i < 3; i++) {
-		for (int j = 0; j < 3; j++) {
-			grid->letters[i][j] = gridLetters[i][j];
-			grid->letterMultiplier[i][j] = 1;
-			grid->wordMultiplier[i][j] = 1;
-		}
+	char gridLetters[9] = {'C', 'A', 'T', 'D', 'O', 'G', 'R', 'A', 'T'};
+	memcpy(grid->letters, gridLetters, 9 * sizeof(char));
+	for (int i = 0; i < 9; i++) {
+		grid->letterMultiplier[i] = 1;
+		grid->wordMultiplier[i] = 1;
 	}
 
 	TrieNode *trie = createNode();
@@ -169,7 +166,7 @@ TEST(word_finding) {
 	insertWord(trie, "DOG", 3);
 	insertWord(trie, "RAT", 3);
 
-	DynamicWordArray words = findWords(grid, trie, 3);
+	DynamicWordArray words = findWords(grid, trie, 3, 0);  // 0 swaps allowed
 	assert(words.size == 3);
 
 	bool foundCat = false, foundDog = false, foundRat = false;
@@ -188,27 +185,25 @@ TEST(word_finding) {
 TEST(score_calculation) {
 	Grid *grid = createGrid(5);
 	// Create a 5x5 grid with various multipliers
-	char gridLetters[5][5] = {
-		{'C', 'A', 'T', 'S', 'P'},
-		{'D', 'O', 'G', 'E', 'L'},
-		{'R', 'A', 'T', 'E', 'A'},
-		{'F', 'I', 'S', 'H', 'Y'},
-		{'Q', 'U', 'I', 'Z', 'Z'}
+	char gridLetters[25] = {
+		'C', 'A', 'T', 'S', 'P',
+		'D', 'O', 'G', 'E', 'L',
+		'R', 'A', 'T', 'E', 'A',
+		'F', 'I', 'S', 'H', 'Y',
+		'Q', 'U', 'I', 'Z', 'Z'
 	};
-	for (int i = 0; i < 5; i++) {
-		for (int j = 0; j < 5; j++) {
-			grid->letters[i][j] = gridLetters[i][j];
-			grid->letterMultiplier[i][j] = 1;
-			grid->wordMultiplier[i][j] = 1;
-		}
+	memcpy(grid->letters, gridLetters, 25 * sizeof(char));
+	for (int i = 0; i < 25; i++) {
+		grid->letterMultiplier[i] = 1;
+		grid->wordMultiplier[i] = 1;
 	}
 	
 	// Set up some multipliers
-	grid->letterMultiplier[0][2] = 2; // Double letter score on 'T' in CAT
-	grid->wordMultiplier[2][2] = 2;   // Double word score on 'T' in RAT
-	grid->letterMultiplier[3][3] = 3; // Triple letter score on 'H' in FISH
-	grid->wordMultiplier[4][3] = 3;   // Triple word score on 'Z' in QUIZ
-	grid->letterMultiplier[4][3] = 4; // Quadruple letter score on 'Z' in QUIZ
+	grid->letterMultiplier[2] = 2;    // Double letter score on 'T' in CAT
+	grid->wordMultiplier[12] = 2;     // Double word score on 'T' in RAT
+	grid->letterMultiplier[18] = 3;   // Triple letter score on 'H' in FISH
+	grid->wordMultiplier[23] = 3;     // Triple word score on 'Z' in QUIZ
+	grid->letterMultiplier[23] = 4;   // Quadruple letter score on 'Z' in QUIZ
 
 	// Test case 1: CAT
 	WordResult result1 = {
@@ -284,7 +279,125 @@ TEST(score_calculation) {
 	assert(result4.score == 135);
 	freeWordResult(&result4);
 
+	// Test case 5: LONGWORD (testing the long word bonus)
+	WordResult result5 = {
+		.word = strdup("LONGWORD"),
+		.positions = malloc(8 * sizeof(Position)),
+		.length = 8,
+		.score = 0,
+		.swapPositions = NULL,
+		.numSwaps = 0
+	};
+	for (int i = 0; i < 8; i++) {
+		result5.positions[i] = (Position){i % 5, i / 5};
+	}
+
+	result5.score = calculateWordScore(result5.word, result5.positions, grid);
+	// Expected score: (3 + 1 + 2 + 3 + 5 + 1 + 2 + 3) + 10 (long word bonus) = 30
+	assert(result5.score == 30);
+	freeWordResult(&result5);
+
 	freeGrid(grid);
+}
+
+TEST(specific_word_finding) {
+	// Test dictionary
+	const char* test_words[] = {
+		"DOGFISH", "JACKFISH", "JACKSCREW", 
+		"XYST", "CHINTZY", "TOUCHBACK",
+		"DOG", "FISH", "JACK", "SCREW", // Similar but lesser words
+		"CHIN", "TOUCH", "BACK", "TINT" // Similar but lesser words
+	};
+	int num_words = sizeof(test_words) / sizeof(test_words[0]);
+
+	TrieNode *trie = createNode();
+	for (int i = 0; i < num_words; i++) {
+		insertWord(trie, test_words[i], strlen(test_words[i]));
+	}
+
+	// Test Grid 1
+	{
+		Grid *grid = createGrid(5);
+		char gridLetters[25] = {
+			'Q', 'W', 'E', 'R', 'T',
+			'Y', 'U', 'I', 'O', 'P',
+			'A', 'S', 'D', 'F', 'G',
+			'H', 'J', 'K', 'L', 'Z',
+			'X', 'C', 'V', 'B', 'N'
+		};
+		memcpy(grid->letters, gridLetters, 25 * sizeof(char));
+		for (int i = 0; i < 25; i++) {
+			grid->letterMultiplier[i] = 1;
+			grid->wordMultiplier[i] = 1;
+		}
+
+		WordResult bestResults[3] = {0};  // For 0, 1, and 2 swaps
+		for (int swaps = 0; swaps <= 2; swaps++) {
+			DynamicWordArray words = findWords(grid, trie, 9, swaps);  // Max word length is 9
+			for (int i = 0; i < words.size; i++) {
+				if (words.array[i].score > bestResults[swaps].score) {
+					freeWordResult(&bestResults[swaps]);
+					bestResults[swaps] = words.array[i];
+					words.array[i].word = NULL;  // Prevent double free
+					words.array[i].positions = NULL;
+					words.array[i].swapPositions = NULL;
+				}
+			}
+			freeDynamicWordArray(&words);
+		}
+
+		assert(strcmp(bestResults[0].word, "DOGFISH") == 0);
+		assert(strcmp(bestResults[1].word, "JACKFISH") == 0);
+		assert(strcmp(bestResults[2].word, "JACKSCREW") == 0);
+
+		for (int i = 0; i < 3; i++) {
+			freeWordResult(&bestResults[i]);
+		}
+		freeGrid(grid);
+	}
+
+	// Test Grid 2
+	{
+		Grid *grid = createGrid(5);
+		char gridLetters[25] = {
+			'A', 'B', 'C', 'D', 'E',
+			'F', 'G', 'H', 'I', 'J',
+			'K', 'L', 'M', 'N', 'O',
+			'P', 'Q', 'R', 'S', 'T',
+			'U', 'V', 'W', 'X', 'Y'
+		};
+		memcpy(grid->letters, gridLetters, 25 * sizeof(char));
+		for (int i = 0; i < 25; i++) {
+			grid->letterMultiplier[i] = 1;
+			grid->wordMultiplier[i] = 1;
+		}
+
+		WordResult bestResults[3] = {0};  // For 0, 1, and 2 swaps
+		for (int swaps = 0; swaps <= 2; swaps++) {
+			DynamicWordArray words = findWords(grid, trie, 9, swaps);  // Max word length is 9
+			for (int i = 0; i < words.size; i++) {
+				if (words.array[i].score > bestResults[swaps].score) {
+					freeWordResult(&bestResults[swaps]);
+					bestResults[swaps] = words.array[i];
+					words.array[i].word = NULL;  // Prevent double free
+					words.array[i].positions = NULL;
+					words.array[i].swapPositions = NULL;
+				}
+			}
+			freeDynamicWordArray(&words);
+		}
+
+		assert(strcmp(bestResults[0].word, "XYST") == 0);
+		assert(strcmp(bestResults[1].word, "CHINTZY") == 0);
+		assert(strcmp(bestResults[2].word, "TOUCHBACK") == 0);
+
+		for (int i = 0; i < 3; i++) {
+			freeWordResult(&bestResults[i]);
+		}
+		freeGrid(grid);
+	}
+
+	freeTrie(trie);
 }
 
 int main() {
@@ -293,6 +406,7 @@ int main() {
 	RUN_TEST(trie_operations);
 	RUN_TEST(word_finding);
 	RUN_TEST(score_calculation);
+	RUN_TEST(specific_word_finding);
 	printf("All tests passed!\n");
 	return 0;
 }

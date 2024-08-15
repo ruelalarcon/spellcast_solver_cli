@@ -20,10 +20,14 @@ void insertWord(TrieNode *root, const char *word, int maxWordLength) {
 		if (c < 'A' || c > 'Z')
 			continue;
 		int index = c - 'A';
-		if (!node->children[index]) {
-			node->children[index] = createNode();
+		if (!(node->children & (1U << index))) {
+			node->children |= (1U << index);
+			if (!node->childPtrs) {
+				node->childPtrs = calloc(26, sizeof(TrieNode*));
+			}
+			node->childPtrs[index] = createNode();
 		}
-		node = node->children[index];
+		node = node->childPtrs[index];
 	}
 	node->isWord = true;
 }
@@ -40,7 +44,6 @@ TrieNode* loadDictionary(const char *filePath, int maxWordLength) {
 	size_t len = 0;
 
 	while (getline(&word, &len, file) != -1) {
-		// Remove newline character if present
 		size_t wordLen = strlen(word);
 		if (wordLen > 0 && word[wordLen - 1] == '\n') {
 			word[wordLen - 1] = '\0';
@@ -60,8 +63,13 @@ TrieNode* loadDictionary(const char *filePath, int maxWordLength) {
 void freeTrie(TrieNode *node) {
 	if (node == NULL)
 		return;
-	for (int i = 0; i < 26; i++) {
-		freeTrie(node->children[i]);
+	if (node->childPtrs) {
+		for (int i = 0; i < 26; i++) {
+			if (node->children & (1U << i)) {
+				freeTrie(node->childPtrs[i]);
+			}
+		}
+		free(node->childPtrs);
 	}
 	free(node);
 }

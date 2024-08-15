@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "word_finder.h"
 
 #define INITIAL_CAPACITY 128
@@ -56,134 +57,94 @@ unsigned short calculateWordScore(const char *word, const Position *positions, c
 		int row = positions[i].row;
 		int col = positions[i].col;
 		unsigned char letterScore = SCORES[word[i] - 'A'];
-		letterScore *= grid->letterMultiplier[row][col];
+		letterScore *= grid->letterMultiplier[row * grid->size + col];
 		baseScore += letterScore;
-		wordMultiplier *= grid->wordMultiplier[row][col];
+		wordMultiplier *= grid->wordMultiplier[row * grid->size + col];
 	}
 
-	return baseScore * wordMultiplier;
+	int longWordBonus = (strlen(word) > 6) * 10;
+
+	return baseScore * wordMultiplier + longWordBonus;
 }
 
 static void dfs(const Grid *grid, int row, int col, TrieNode *node, DynamicWordArray *words,
-				bool **visited, char *currentWord, Position *currentPositions, int depth, int maxWordLength) {
-	if (depth >= maxWordLength || visited[row][col])
+				bool *visited, char *currentWord, Position *currentPositions, int depth,
+				int maxWordLength, int remainingSwaps, Position *swapPositions, int swapDepth) {
+	if (depth >= maxWordLength || visited[row * grid->size + col])
 		return;
 
-	char letter = grid->letters[row][col];
-	TrieNode *child = node->children[letter - 'A'];
-	if (!child)
-		return;
+	visited[row * grid->size + col] = true;
+	
+	for (int letter = 0; letter < 26; letter++) {
+		if (!(node->children & (1U << letter))) continue;
+		
+		TrieNode *child = node->childPtrs[letter];
+		char currentLetter = 'A' + letter;
+		bool isSwap = (currentLetter != grid->letters[row * grid->size + col]);
 
-	visited[row][col] = true;
-	currentWord[depth] = letter;
-	currentPositions[depth] = (Position){row, col};
+		if (isSwap && remainingSwaps == 0) continue;
 
-	if (child->isWord && depth > 0) {
-		currentWord[depth + 1] = '\0';
-		WordResult wordResult = {
-			.word = strdup(currentWord),
-			.positions = malloc((depth + 1) * sizeof(Position)),
-			.length = depth + 1,
-			.score = calculateWordScore(currentWord, currentPositions, grid),
-			.swapPositions = NULL,
-			.numSwaps = 0
-		};
-		memcpy(wordResult.positions, currentPositions, (depth + 1) * sizeof(Position));
-		addWordResult(words, wordResult);
-	}
+		currentWord[depth] = currentLetter;
+		currentPositions[depth] = (Position){row, col};
 
-	const int directions[8][2] = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1},
-								  {0, 1},   {1, -1}, {1, 0},  {1, 1}};
-	for (int i = 0; i < 8; i++) {
-		int newRow = row + directions[i][0];
-		int newCol = col + directions[i][1];
-		if (newRow >= 0 && newRow < grid->size && newCol >= 0 && newCol < grid->size) {
-			dfs(grid, newRow, newCol, child, words, visited, currentWord,
-				currentPositions, depth + 1, maxWordLength);
+		if (isSwap) {
+			swapPositions[swapDepth] = (Position){row, col};
+		}
+
+		if (child->isWord && depth > 0) {
+			currentWord[depth + 1] = '\0';
+			WordResult wordResult = {
+				.word = strdup(currentWord),
+				.positions = malloc((depth + 1) * sizeof(Position)),
+				.length = depth + 1,
+				.score = calculateWordScore(currentWord, currentPositions, grid),
+				.swapPositions = malloc(maxWordLength * sizeof(Position)),
+				.numSwaps = isSwap ? swapDepth + 1 : swapDepth
+			};
+			memcpy(wordResult.positions, currentPositions, (depth + 1) * sizeof(Position));
+			memcpy(wordResult.swapPositions, swapPositions, wordResult.numSwaps * sizeof(Position));
+			addWordResult(words, wordResult);
+		}
+
+		const int directions[8][2] = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1},
+									  {0, 1},   {1, -1}, {1, 0},  {1, 1}};
+		for (int i = 0; i < 8; i++) {
+			int newRow = row + directions[i][0];
+			int newCol = col + directions[i][1];
+			if (newRow >= 0 && newRow < grid->size && newCol >= 0 && newCol < grid->size) {
+				dfs(grid, newRow, newCol, child, words, visited, currentWord,
+					currentPositions, depth + 1, maxWordLength, 
+					isSwap ? remainingSwaps - 1 : remainingSwaps,
+					swapPositions, isSwap ? swapDepth + 1 : swapDepth);
+			}
+		}
+
+		if (isSwap) {
+			swapPositions[swapDepth] = (Position){-1, -1};  // Reset swap position
 		}
 	}
 
-	visited[row][col] = false;
+	visited[row * grid->size + col] = false;
 }
 
-DynamicWordArray findWords(const Grid *grid, TrieNode *trie, int maxWordLength) {
+DynamicWordArray findWords(const Grid *grid, TrieNode *trie, int maxWordLength, int maxSwaps) {
 	DynamicWordArray words = initDynamicWordArray();
-	bool **visited = malloc(grid->size * sizeof(bool *));
-	for (int i = 0; i < grid->size; i++) {
-		visited[i] = calloc(grid->size, sizeof(bool));
-	}
+	bool *visited = calloc(grid->size * grid->size, sizeof(bool));
 	char *currentWord = malloc((maxWordLength + 1) * sizeof(char));
 	Position *currentPositions = malloc(maxWordLength * sizeof(Position));
+	Position *swapPositions = malloc(maxWordLength * sizeof(Position));
 
 	for (int r = 0; r < grid->size; r++) {
 		for (int c = 0; c < grid->size; c++) {
 			dfs(grid, r, c, trie, &words, visited, currentWord,
-				currentPositions, 0, maxWordLength);
+				currentPositions, 0, maxWordLength, maxSwaps, swapPositions, 0);
 		}
 	}
 
-	for (int i = 0; i < grid->size; i++) {
-		free(visited[i]);
-	}
 	free(visited);
 	free(currentWord);
 	free(currentPositions);
+	free(swapPositions);
 
 	return words;
-}
-
-
-static void findBestWordWithSwapsRecursive(char *word, const Position *originalPositions, TrieNode *trie,
-										   const Grid *grid, WordResult *bestResults, int currentSwaps,
-										   int maxSwaps, int maxWordLength, Position *currentSwapPositions) {
-	TrieNode *node = trie;
-	for (int i = 0; word[i]; i++) {
-		node = node->children[word[i] - 'A'];
-		if (!node)
-			return; // Word not in dictionary
-	}
-
-	if (node->isWord) {
-		unsigned short score = calculateWordScore(word, originalPositions, grid);
-		if (score > bestResults[currentSwaps].score) {
-			strncpy(bestResults[currentSwaps].word, word, maxWordLength);
-			bestResults[currentSwaps].word[maxWordLength] = '\0';
-			bestResults[currentSwaps].score = score;
-			memcpy(bestResults[currentSwaps].positions, originalPositions, strlen(word) * sizeof(Position));
-			bestResults[currentSwaps].length = strlen(word);
-			bestResults[currentSwaps].numSwaps = currentSwaps;
-			memcpy(bestResults[currentSwaps].swapPositions, currentSwapPositions, currentSwaps * sizeof(Position));
-		}
-	}
-
-	if (currentSwaps >= maxSwaps)
-		return;
-
-	for (int i = 0; word[i]; i++) {
-		char original = word[i];
-		for (char newC = 'A'; newC <= 'Z'; newC++) {
-			if (newC != original) {
-				word[i] = newC;
-				currentSwapPositions[currentSwaps] = originalPositions[i];
-				findBestWordWithSwapsRecursive(word, originalPositions, trie, grid, bestResults,
-											   currentSwaps + 1, maxSwaps, maxWordLength, currentSwapPositions);
-			}
-		}
-		word[i] = original; // Restore original letter
-	}
-}
-
-void findBestWordWithSwaps(const WordResult *word, TrieNode *trie, const Grid *grid,
-						   WordResult *bestResults, int maxSwaps, int maxWordLength) {
-	char *swappedWord = malloc((maxWordLength + 1) * sizeof(char));
-	strncpy(swappedWord, word->word, maxWordLength);
-	swappedWord[maxWordLength] = '\0';
-
-	Position *currentSwapPositions = malloc(maxSwaps * sizeof(Position));
-
-	findBestWordWithSwapsRecursive(swappedWord, word->positions, trie, grid, bestResults,
-								   0, maxSwaps, maxWordLength, currentSwapPositions);
-
-	free(swappedWord);
-	free(currentSwapPositions);
 }

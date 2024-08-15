@@ -9,9 +9,9 @@ typedef struct {
 } Position;
 
 typedef struct {
-	char **letters;
-	int **letterMultiplier;
-	int **wordMultiplier;
+	char *letters;
+	int *letterMultiplier;
+	int *wordMultiplier;
 	int size;
 } Grid;
 
