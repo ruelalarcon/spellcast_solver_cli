@@ -4,7 +4,7 @@
 
 ## Installation
 
-To use spellcast_solver_cli, you need to have a C compiler (such as gcc) installed on your system. Clone this repository and compile the project:
+To use spellcast_solver_cli, you need to have a C compiler (gcc) installed on your system. Clone this repository and compile the project:
 
 ```bash
 git clone https://github.com/ruelalarcon/spellcast_solver_cli.git
@@ -86,6 +86,29 @@ Here:
 - The 'M' is both a double letter and double word tile
 - The 'R' is a triple word tile
 
+## Parallelization with OpenMP
+
+This solver utilizes OpenMP for parallelization, improving performance on multi-core systems.
+
+You can control the number of threads used by the solver using the `OMP_NUM_THREADS` environment variable. Here are some examples:
+
+Set a specific number of threads:
+```bash
+export OMP_NUM_THREADS=4
+./spellcast_solver grid.txt
+```
+
+Use all available cores:
+```bash
+export OMP_NUM_THREADS=$(nproc)
+./spellcast_solver grid.txt
+```
+
+Set threads for a single run:
+```bash
+OMP_NUM_THREADS=8 ./spellcast_solver grid.txt
+```
+
 ## Output Examples
 
 ### JSON Output
@@ -121,6 +144,8 @@ When using the `--json true` option, the output will be in JSON format:
 ### Standard Output
 
 For the standard output format (when `--json` is not used), the solver will print the results in a human-readable format, including a visual representation of the grid with the word highlighted in green, and letters that require swapping in blue.
+
+If a word in our dictionary is incompatible with Spellcast, try deleting it from your dictionary and running the program again. Additionally, feel free to make a pull request with the incompatible words removed.
 
 ![output](https://github.com/user-attachments/assets/9b86f90e-fae5-4713-8176-ee2074c6bf34)
 

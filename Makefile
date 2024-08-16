@@ -1,8 +1,8 @@
 # Compiler settings
 CC := gcc
-CFLAGS := -Wall -Wextra -pedantic -std=gnu99 -O2
+CFLAGS := -Wall -Wextra -pedantic -std=gnu99 -O2 -fopenmp
 CPPFLAGS := -MMD -MP -D_GNU_SOURCE
-LDFLAGS :=
+LDFLAGS := -fopenmp
 
 # Directories
 SRC_DIR := .

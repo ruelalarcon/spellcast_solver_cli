@@ -1,3 +1,4 @@
+#include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,17 +21,34 @@ static DynamicWordArray initDynamicWordArray() {
 	return dwa;
 }
 
+static WordResult createWordResult(const char *word, const Position *positions, int length, const Grid *grid, const Position *swapPositions, int numSwaps) {
+	WordResult wordResult = {
+		.word = strdup(word),
+		.positions = malloc(length * sizeof(Position)),
+		.length = length,
+		.score = calculateWordScore(word, positions, grid),
+		.swapPositions = malloc(numSwaps * sizeof(Position)),
+		.numSwaps = numSwaps
+	};
+	memcpy(wordResult.positions, positions, length * sizeof(Position));
+	memcpy(wordResult.swapPositions, swapPositions, numSwaps * sizeof(Position));
+	return wordResult;
+}
+
 static void addWordResult(DynamicWordArray *dwa, WordResult word) {
-	if (dwa->size == dwa->capacity) {
-		dwa->capacity *= 2;
-		WordResult *temp = realloc(dwa->array, dwa->capacity * sizeof(WordResult));
-		if (!temp) {
-			fprintf(stderr, "Memory reallocation failed\n");
-			exit(1);
+	#pragma omp critical
+	{
+		if (dwa->size == dwa->capacity) {
+			dwa->capacity *= 2;
+			WordResult *temp = realloc(dwa->array, dwa->capacity * sizeof(WordResult));
+			if (!temp) {
+				fprintf(stderr, "Memory reallocation failed\n");
+				exit(1);
+			}
+			dwa->array = temp;
 		}
-		dwa->array = temp;
+		dwa->array[dwa->size++] = word;
 	}
-	dwa->array[dwa->size++] = word;
 }
 
 void freeDynamicWordArray(DynamicWordArray *dwa) {
@@ -75,35 +93,18 @@ static void dfs(const Grid *grid, int row, int col, TrieNode *node, DynamicWordA
 
 	visited[row * grid->size + col] = true;
 	
-	for (int letter = 0; letter < 26; letter++) {
-		if (!(node->children & (1U << letter))) continue;
-		
-		TrieNode *child = node->childPtrs[letter];
-		char currentLetter = 'A' + letter;
-		bool isSwap = (currentLetter != grid->letters[row * grid->size + col]);
+	unsigned int children = node->children;
+	char gridLetter = grid->letters[row * grid->size + col];
+	bool isGridLetterValid = (children & (1U << (gridLetter - 'A')));
 
-		if (isSwap && remainingSwaps == 0) continue;
-
-		currentWord[depth] = currentLetter;
+	if (isGridLetterValid) {
+		TrieNode *child = node->childPtrs[gridLetter - 'A'];
+		currentWord[depth] = gridLetter;
 		currentPositions[depth] = (Position){row, col};
-
-		if (isSwap) {
-			swapPositions[swapDepth] = (Position){row, col};
-		}
 
 		if (child->isWord && depth > 0) {
 			currentWord[depth + 1] = '\0';
-			WordResult wordResult = {
-				.word = strdup(currentWord),
-				.positions = malloc((depth + 1) * sizeof(Position)),
-				.length = depth + 1,
-				.score = calculateWordScore(currentWord, currentPositions, grid),
-				.swapPositions = malloc(maxWordLength * sizeof(Position)),
-				.numSwaps = isSwap ? swapDepth + 1 : swapDepth
-			};
-			memcpy(wordResult.positions, currentPositions, (depth + 1) * sizeof(Position));
-			memcpy(wordResult.swapPositions, swapPositions, wordResult.numSwaps * sizeof(Position));
-			addWordResult(words, wordResult);
+			addWordResult(words, createWordResult(currentWord, currentPositions, depth + 1, grid, swapPositions, swapDepth));
 		}
 
 		const int directions[8][2] = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1},
@@ -113,14 +114,42 @@ static void dfs(const Grid *grid, int row, int col, TrieNode *node, DynamicWordA
 			int newCol = col + directions[i][1];
 			if (newRow >= 0 && newRow < grid->size && newCol >= 0 && newCol < grid->size) {
 				dfs(grid, newRow, newCol, child, words, visited, currentWord,
-					currentPositions, depth + 1, maxWordLength, 
-					isSwap ? remainingSwaps - 1 : remainingSwaps,
-					swapPositions, isSwap ? swapDepth + 1 : swapDepth);
+					currentPositions, depth + 1, maxWordLength, remainingSwaps,
+					swapPositions, swapDepth);
 			}
 		}
+	}
 
-		if (isSwap) {
-			swapPositions[swapDepth] = (Position){-1, -1};  // Reset swap position
+	if (remainingSwaps > 0) {
+		while (children) {
+			int letter = __builtin_ctz(children);
+			char currentLetter = 'A' + letter;
+			
+			if (currentLetter != gridLetter) {
+				TrieNode *child = node->childPtrs[letter];
+				currentWord[depth] = currentLetter;
+				currentPositions[depth] = (Position){row, col};
+				swapPositions[swapDepth] = (Position){row, col};
+
+				if (child->isWord && depth > 0) {
+					currentWord[depth + 1] = '\0';
+					addWordResult(words, createWordResult(currentWord, currentPositions, depth + 1, grid, swapPositions, swapDepth + 1));
+				}
+
+				const int directions[8][2] = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1},
+											  {0, 1},   {1, -1}, {1, 0},  {1, 1}};
+				for (int i = 0; i < 8; i++) {
+					int newRow = row + directions[i][0];
+					int newCol = col + directions[i][1];
+					if (newRow >= 0 && newRow < grid->size && newCol >= 0 && newCol < grid->size) {
+						dfs(grid, newRow, newCol, child, words, visited, currentWord,
+							currentPositions, depth + 1, maxWordLength, remainingSwaps - 1,
+							swapPositions, swapDepth + 1);
+					}
+				}
+			}
+			
+			children &= (children - 1);
 		}
 	}
 
@@ -129,22 +158,27 @@ static void dfs(const Grid *grid, int row, int col, TrieNode *node, DynamicWordA
 
 DynamicWordArray findWords(const Grid *grid, TrieNode *trie, int maxWordLength, int maxSwaps) {
 	DynamicWordArray words = initDynamicWordArray();
-	bool *visited = calloc(grid->size * grid->size, sizeof(bool));
-	char *currentWord = malloc((maxWordLength + 1) * sizeof(char));
-	Position *currentPositions = malloc(maxWordLength * sizeof(Position));
-	Position *swapPositions = malloc(maxWordLength * sizeof(Position));
 
-	for (int r = 0; r < grid->size; r++) {
-		for (int c = 0; c < grid->size; c++) {
-			dfs(grid, r, c, trie, &words, visited, currentWord,
-				currentPositions, 0, maxWordLength, maxSwaps, swapPositions, 0);
+	#pragma omp parallel
+	{
+		bool *visited = calloc(grid->size * grid->size, sizeof(bool));
+		char *currentWord = malloc((maxWordLength + 1) * sizeof(char));
+		Position *currentPositions = malloc(maxWordLength * sizeof(Position));
+		Position *swapPositions = malloc(maxWordLength * sizeof(Position));
+
+		#pragma omp for collapse(2)
+		for (int r = 0; r < grid->size; r++) {
+			for (int c = 0; c < grid->size; c++) {
+				dfs(grid, r, c, trie, &words, visited, currentWord,
+					currentPositions, 0, maxWordLength, maxSwaps, swapPositions, 0);
+			}
 		}
-	}
 
-	free(visited);
-	free(currentWord);
-	free(currentPositions);
-	free(swapPositions);
+		free(visited);
+		free(currentWord);
+		free(currentPositions);
+		free(swapPositions);
+	}
 
 	return words;
 }
