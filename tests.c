@@ -18,17 +18,17 @@ char* create_temp_file(const char* content) {
 		perror("Failed to create temporary file");
 		exit(1);
 	}
-	
+
 	FILE* temp_file = fdopen(fd, "w");
 	if (temp_file == NULL) {
 		perror("Failed to open temporary file");
 		close(fd);
 		exit(1);
 	}
-	
+
 	fprintf(temp_file, "%s", content);
 	fclose(temp_file);
-	
+
 	return strdup(template);
 }
 
@@ -197,7 +197,7 @@ TEST(score_calculation) {
 		grid->letterMultiplier[i] = 1;
 		grid->wordMultiplier[i] = 1;
 	}
-	
+
 	// Set up some multipliers
 	grid->letterMultiplier[2] = 2;    // Double letter score on 'T' in CAT
 	grid->wordMultiplier[12] = 2;     // Double word score on 'T' in RAT
@@ -303,7 +303,7 @@ TEST(score_calculation) {
 TEST(specific_word_finding) {
 	// Test dictionary
 	const char* test_words[] = {
-		"DOGFISH", "JACKFISH", "JACKSCREW", 
+		"DOGFISH", "JACKFISH", "JACKSCREW",
 		"XYST", "CHINTZY", "TOUCHBACK",
 		"DOG", "FISH", "JACK", "SCREW", // Similar but lesser words
 		"CHIN", "TOUCH", "BACK", "TINT" // Similar but lesser words

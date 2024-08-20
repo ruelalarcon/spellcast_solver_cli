@@ -92,7 +92,7 @@ static void dfs(const Grid *grid, int row, int col, TrieNode *node, DynamicWordA
 		return;
 
 	visited[row * grid->size + col] = true;
-	
+
 	unsigned int children = node->children;
 	char gridLetter = grid->letters[row * grid->size + col];
 	bool isGridLetterValid = (children & (1U << (gridLetter - 'A')));
@@ -124,7 +124,7 @@ static void dfs(const Grid *grid, int row, int col, TrieNode *node, DynamicWordA
 		while (children) {
 			int letter = __builtin_ctz(children);
 			char currentLetter = 'A' + letter;
-			
+
 			if (currentLetter != gridLetter) {
 				TrieNode *child = node->childPtrs[letter];
 				currentWord[depth] = currentLetter;
@@ -148,7 +148,7 @@ static void dfs(const Grid *grid, int row, int col, TrieNode *node, DynamicWordA
 					}
 				}
 			}
-			
+
 			children &= (children - 1);
 		}
 	}

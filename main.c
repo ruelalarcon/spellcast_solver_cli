@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
 				freeWordResult(&bestResults[swaps]);
 			}
 			bestResults[swaps] = words.array[i];
-			
+
 			// Create deep copy of the word result
 			bestResults[swaps].word = strdup(words.array[i].word);
 			bestResults[swaps].positions = malloc(words.array[i].length * sizeof(Position));
