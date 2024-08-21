@@ -34,7 +34,7 @@ void loadGrid(const char *filePath, Grid *grid) {
 		for (int i = 0; line[i] && col < grid->size; i++) {
 			if (isalpha(line[i])) {
 				grid->letters[row * grid->size + col] = toupper(line[i]);
-				
+
 				// Count total '*' and '^' characters
 				int letterMultiplier = 0;
 				int wordMultiplier = 0;
@@ -43,10 +43,10 @@ void loadGrid(const char *filePath, Grid *grid) {
 					if (line[i+1] == '^') wordMultiplier++;
 					i++;
 				}
-				
+
 				grid->letterMultiplier[row * grid->size + col] = letterMultiplier + 1;
 				grid->wordMultiplier[row * grid->size + col] = wordMultiplier + 1;
-				
+
 				col++;
 			}
 		}
